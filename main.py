@@ -10,7 +10,7 @@ def main():
     apriori_model.train(transactions)
 
     # Example input: predict products frequently bought together with a specific product
-    input_products = ['california-sun-kissed-navel-oranges']
+    input_products = ['farm-fresh-whole-organic-milk-1-gallon']
     recommendations = apriori_model.predict(input_products, num_recommendations=4)
 
     # Print the recommendations
