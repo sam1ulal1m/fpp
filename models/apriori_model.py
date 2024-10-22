@@ -10,29 +10,43 @@ class AprioriModel:
         self.rules = None
 
     def train(self, transactions):
-        # One-hot encode the transaction data
-        df_encoded = self._encode_transactions(transactions)
+        # Convert transactions to a one-hot encoded DataFrame
+        self.transaction_df = pd.DataFrame([{item: True for item in transaction} for transaction in transactions]).fillna(False)
 
-        # Apply the Apriori algorithm
-        frequent_itemsets = apriori(df_encoded, min_support=self.min_support, use_colnames=True)
+        # Apply apriori algorithm
+        frequent_itemsets = apriori(self.transaction_df, min_support=self.min_support, use_colnames=True)
+        print("Frequent Itemsets:\n", frequent_itemsets)
 
-        # Generate association rules
-        self.rules = association_rules(frequent_itemsets, metric="confidence", min_threshold=self.min_confidence)
-        self.rules = self.rules.sort_values(by="lift", ascending=False)
+        # Check if frequent_itemsets is empty
+        if frequent_itemsets.empty:
+            print("No frequent itemsets found with the given support threshold.")
+            return
+
+        # Generate association rules with a lower confidence threshold
+        self.rules = association_rules(frequent_itemsets, metric="confidence", min_threshold=0.3)  # Lowered to 0.3
+        print("Association Rules (Confidence >= 0.3):\n", self.rules)
+
+        # Check if rules are generated
+        if self.rules.empty:
+            print("No association rules generated with the given confidence threshold.")
+            # You could try generating rules with lift or other metrics
+            self.rules_lift = association_rules(frequent_itemsets, metric="lift", min_threshold=1.0)
+            print("Association Rules (Lift >= 1.0):\n", self.rules_lift)
 
     def predict(self, input_products, num_recommendations=4):
-        input_products = frozenset(input_products)
-        matching_rules = self.rules[self.rules['antecedents'].apply(lambda x: input_products.issubset(x))]
+        # Filter rules based on input_products
+        relevant_rules = self.rules[self.rules['antecedents'].apply(lambda x: set(input_products).issubset(x))]
+        print("Relevant Rules:\n", relevant_rules)
 
-        recommended_products = set()
-        for _, row in matching_rules.iterrows():
-            recommended_products.update(row['consequents'])
+        recommendations = set()
+        for _, rule in relevant_rules.iterrows():
+            recommendations.update(rule['consequents'])
 
-        return list(recommended_products)[:num_recommendations]
+        # Return the top N recommendations
+        return list(recommendations)[:num_recommendations]
 
     def _encode_transactions(self, transactions):
         from mlxtend.preprocessing import TransactionEncoder
         te = TransactionEncoder()
         te_ary = te.fit(transactions).transform(transactions)
         return pd.DataFrame(te_ary, columns=te.columns_)
-

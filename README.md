@@ -53,3 +53,6 @@ The system uses machine learning algorithms to predict relevant products based o
    Clone the project from GitHub using:
    ```bash
    git clone https://github.com/yourusername/trendify.git
+
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate

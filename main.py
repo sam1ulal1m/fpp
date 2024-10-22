@@ -1,21 +1,43 @@
-# main.py
+from flask import Flask, request, jsonify
+import subprocess
 from models.apriori_model import AprioriModel
 from utils.data_loader import load_transactions
 
-def main():
-    # Load transactions from data file
-    transactions = load_transactions('data/transactions.csv')
+app = Flask(__name__)
 
-    # Create and train the Apriori model
-    apriori_model = AprioriModel(min_support=0.1, min_confidence=0.5)
-    apriori_model.train(transactions)
+# Initialize the Apriori model (but do not train it yet)
+apriori_model = AprioriModel(min_support=0.05, min_confidence=0.2)
 
-    # Example input: predict products frequently bought together with a specific product
-    input_products = ['farm-fresh-whole-organic-milk-1-gallon']
-    recommendations = apriori_model.predict(input_products, num_recommendations=4)
+@app.route('/train', methods=['POST'])
+def train():
+    try:
+        # Run the convert.py script to fetch and convert data into the CSV
+        subprocess.run(['python3', 'data/convert.py'], check=True)
 
-    # Print the recommendations
-    print("Recommended products:", recommendations)
+        # Load transactions from the newly created CSV file
+        transactions = load_transactions('data/transactions.csv')
+
+        # Train the model with the loaded transactions
+        apriori_model.train(transactions)
+
+        return jsonify({'message': 'Model trained successfully.'})
+    except subprocess.CalledProcessError as e:
+        return jsonify({'error': f'Failed to run data conversion: {e}'}), 500
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/recommend', methods=['GET'])
+def recommend():
+    # Get product handle from query parameters
+    product_handle = request.args.get('product_handle')
+
+    if not product_handle:
+        return jsonify({'error': 'Product handle is required'}), 400
+
+    # Get recommendations for the provided product handle
+    recommendations = apriori_model.predict([product_handle], num_recommendations=4)
+
+    return jsonify({'recommended_products': recommendations})
 
 if __name__ == "__main__":
-    main()
+    app.run(debug=True)

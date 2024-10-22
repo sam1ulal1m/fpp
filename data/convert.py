@@ -1,4 +1,5 @@
 import csv
+import requests
 
 def convert_to_csv(data, output_file):
     # Open the CSV file for writing
@@ -18,112 +19,31 @@ def convert_to_csv(data, output_file):
             # Write the row to the CSV file (joining handles with commas)
             writer.writerow([','.join(handles)])
 
-# Example data
-data = [
-    {
-      "lineItems": {
-        "nodes": [
-          {
-            "product": {
-              "handle": "california-sun-kissed-navel-oranges",
-              "category": None
-            },
-            "name": "California Sun Kissed Navel Oranges"
-          },
-          {
-            "product": {
-              "handle": "fresh-organic-honeycrisp-apples",
-              "category": {
-                "name": "Apples"
-              }
-            },
-            "name": "Fresh Organic Honeycrisp Apples"
-          },
-          {
-            "product": {
-              "handle": "seedless-green-table-grapes",
-              "category": None
-            },
-            "name": "Seedless Green Table Grapes"
-          }
-        ]
-      }
-    },
-    {
-      "lineItems": {
-        "nodes": [
-          {
-            "product": {
-              "handle": "farm-fresh-whole-organic-milk-1-gallon",
-              "category": None
-            },
-            "name": "Farm Fresh Whole Organic Milk"
-          },
-          {
-            "product": {
-              "handle": "premium-grass-fed-unsalted-butter-1-lb",
-              "category": None
-            },
-            "name": "Premium Grass Fed Unsalted Butter"
-          },
-          {
-            "product": {
-              "handle": "cage-free-organic-large-brown-eggs-dozen",
-              "category": None
-            },
-            "name": "Cage Free Organic Large Brown Eggs"
-          }
-        ]
-      }
-    },
-    {
-      "lineItems": {
-        "nodes": [
-          {
-            "product": {
-              "handle": "california-sun-kissed-navel-oranges",
-              "category": None
-            },
-            "name": "California Sun Kissed Navel Oranges"
-          },
-          {
-            "product": {
-              "handle": "freshly-squeezed-orange-juice-1-quart",
-              "category": None
-            },
-            "name": "Freshly Squeezed Orange Juice"
-          }
-        ]
-      }
-    },
-    {
-      "lineItems": {
-        "nodes": [
-          {
-            "product": {
-              "handle": "red-organic-heirloom-tomatoes",
-              "category": None
-            },
-            "name": "Red Organic Heirloom Tomatoes"
-          },
-          {
-            "product": {
-              "handle": "organic-russet-potatoes",
-              "category": None
-            },
-            "name": "Organic Russet Potatoes"
-          },
-          {
-            "product": {
-              "handle": "locally-grown-organic-baby-spinach",
-              "category": None
-            },
-            "name": "Locally Grown Organic Baby Spinach"
-          }
-        ]
-      }
-    }
-]
+def fetch_order_data(api_url):
+    try:
+        # Send a GET request to the provided API URL
+        response = requests.get(api_url)
+        response.raise_for_status()  # Check if the request was successful
 
-# Convert the data to CSV and save it as 'output.csv'
-convert_to_csv(data, 'transactions.csv')
+        # Parse the JSON response
+        order_data = response.json()
+
+        # Return the list of orders
+        return order_data.get('orders', [])
+
+    except requests.exceptions.RequestException as e:
+        print(f"Failed to fetch data from API: {e}")
+        return []
+
+if __name__ == "__main__":
+    # API URL to fetch order data
+    api_url = 'https://warriors-portfolio-specified-hunt.trycloudflare.com/api/products?shop=dyn-sa-3.myshopify.com'
+
+    # Fetch data from the API
+    order_data = fetch_order_data(api_url)
+
+    # Convert the fetched data to CSV
+    output_file = 'data/transactions.csv'
+    convert_to_csv(order_data, output_file)
+
+    print(f"Data saved to {output_file}")
