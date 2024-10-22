@@ -47,6 +47,11 @@ The system uses machine learning algorithms to predict relevant products based o
 2. **Git**: Ensure Git is installed to clone the repository.
 3. **Virtual Environment (optional)**: Recommended for dependency management.
 
+python -m venv myenv
+
+myenv\Scripts\activate
+source myenv/bin/activate
+
 ### Steps:
 
 1. **Clone the Repository**  

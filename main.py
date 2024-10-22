@@ -5,6 +5,14 @@ from utils.data_loader import load_transactions
 
 app = Flask(__name__)
 
+# Configure CORS for all origins (consider modifying for production)
+@app.after_request
+def after_request(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'  # Allow all origins (adjust for production)
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST'
+    return response
+
 # Initialize the Apriori model (but do not train it yet)
 apriori_model = AprioriModel(min_support=0.05, min_confidence=0.2)
 
